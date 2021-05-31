@@ -15,7 +15,7 @@
  */
 
 package org.tensorflow.lite.examples.classification;
-
+  
 import android.Manifest;
 import android.app.Fragment;
 import android.content.Context;
