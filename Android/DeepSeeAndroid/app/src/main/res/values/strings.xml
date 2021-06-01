@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TfLiteImageClassification</string>
+    <string name="app_name">DeepSee</string>
     <string name="description_info">Info</string>
     <string name="request_permission">This sample needs camera permission.</string>
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
@@ -17,6 +17,7 @@
     </string-array>
 
     <string name="device">Device:</string>
+    <string name="save_to_cloud">Save to Cloud</string>
     <string-array name="devices">
         <item>CPU</item>
         <item>GPU</item>

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1003641984120",
+    "project_id": "deepsee-313815",
+    "storage_bucket": "deepsee-313815.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1003641984120:android:2f533daeca184bade9898d",
+        "android_client_info": {
+          "package_name": "org.tensorflow.lite.examples.classification"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1003641984120-jfemfvpjali5jo2hoil29a3a97ppv7n8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDd8g442kv_X2oHoJLb1MWmWbsYoWD-Xxw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1003641984120-jfemfvpjali5jo2hoil29a3a97ppv7n8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
