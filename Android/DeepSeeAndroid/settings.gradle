@@ -1,1 +1,1 @@
-include ':app'
+include ':app', ':lib_interpreter', ':lib_task_api'

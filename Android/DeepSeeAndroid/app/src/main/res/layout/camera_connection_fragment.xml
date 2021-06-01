@@ -23,5 +23,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true" />
 
+    <org.tensorflow.lite.examples.detection.customview.OverlayView
+        android:id="@+id/tracking_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 
 </RelativeLayout>
