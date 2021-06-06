@@ -31,18 +31,12 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.UiThread;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
+import android.speech.tts.TextToSpeech;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -56,27 +50,26 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.tensorflow.lite.examples.classification.env.ImageUtils;
 import org.tensorflow.lite.examples.classification.env.Logger;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Device;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Model;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Recognition;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 public abstract class CameraActivity extends AppCompatActivity
         implements OnImageAvailableListener,
@@ -120,15 +113,14 @@ public abstract class CameraActivity extends AppCompatActivity
     private Spinner deviceSpinner;
     private TextView threadsTextView;
     private Button btnSaveToCloud;
+    private TextToSpeech t1;
 
     // private Model model = Model.QUANTIZED;
     private Model model = Model.FLOAT;
     private Device device = Device.CPU;
     private int numThreads = -1;
     int n_class = 20;
-    MediaPlayer mp[] = new MediaPlayer[n_class];
 
-    //   MediaPlayer mp,mp1,mp2;
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         LOGGER.d("onCreate " + this);
@@ -228,6 +220,15 @@ public abstract class CameraActivity extends AppCompatActivity
         model = Model.valueOf(modelSpinner.getSelectedItem().toString().toUpperCase());
         device = Device.valueOf(deviceSpinner.getSelectedItem().toString());
         numThreads = Integer.parseInt(threadsTextView.getText().toString().trim());
+
+        t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    t1.setLanguage(Locale.US);
+                }
+            }
+        });
     }
 
     protected int[] getRgbBytes() {
@@ -370,14 +371,6 @@ public abstract class CameraActivity extends AppCompatActivity
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
-
-        for (int i = 0; i < n_class; i++) {
-//      mp.add(MediaPlayer.create(this, R.raw.hun));
-            mp[i] = MediaPlayer.create(this, R.raw.hun);
-        }
-//    mp = MediaPlayer.create(this, R.raw.hun);
-//    mp1 = MediaPlayer.create(this, R.raw.ten);
-//    mp2 = MediaPlayer.create(this, R.raw.five);
 
  /*   mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
       @Override
@@ -565,9 +558,9 @@ public abstract class CameraActivity extends AppCompatActivity
         }
     }
 
-  public boolean isDebug() {
+    public boolean isDebug() {
     return debug;
-  }
+    }
 
     protected void readyForNextImage() {
         if (postInferenceCallback != null) {
@@ -608,11 +601,11 @@ public abstract class CameraActivity extends AppCompatActivity
                     recognitionValueTextView.setText(
                             String.format("%.2f", (100 * recognition.getConfidence())) + "%");
                 float confi = 100 * recognition.getConfidence();
-                String[] labels = {"airport_inside", "artstudio", "bathroom", "classroom", "computerroom", "elevator", "greenhouse", "hospitalroom", "inside_bus", "kindergarden", "laboratorywet", "library", "locker_room", "museum", "office", "operating_room", "poolinside", "restaurant_kitchen", "studiomusic", "tv_studio", "waitingroom"};
+                String[] labels = {"artstudio", "bathroom", "classroom", "computerroom", "elevator", "greenhouse", "hospitalroom", "inside_bus", "kindergarden", "laboratorywet", "library", "museum", "office", "operating_room", "poolinside", "restaurant_kitchen", "stairscase", "studiomusic", "tv_studio", "waitingroom"};
                 try {
                     for (int i = 0; i < n_class; i++) {
-                        if (!scenes[i] && recognitionTextView.getText().toString().equalsIgnoreCase(labels[i]) && confi > 99) {
-                            mp[i].start();
+                        if (!scenes[i] && recognitionTextView.getText().toString().equalsIgnoreCase(labels[i]) && confi > 90) {
+                            t1.speak(labels[i], TextToSpeech.QUEUE_FLUSH, null);
                             scenes[i] = true;
                             for (int j = 0; j < n_class; j++) {
                                 if (j != i) {
@@ -621,43 +614,18 @@ public abstract class CameraActivity extends AppCompatActivity
                             }
                         }
                     }
-//          if (!five && recognitionTextView.getText().toString().equalsIgnoreCase("500") && confi>99 ) {
-//            mp2.start();
-//            five =true;
-//            ten = false;
-//            hun = false;
-//          } else if (!hun&& recognitionTextView.getText().toString().equalsIgnoreCase("100")&& confi>99) {
-//            mp.start();
-//            hun = true;
-//            five =false;
-//            ten = false;
-//          } else if (!ten&&recognitionTextView.getText().toString().equalsIgnoreCase("10")&& confi>90 ) {
-//            mp1.start();
-//            ten  =true;
-//            five =false;
-//            hun = false;
-//          }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
 
-//      for (int i=1; i<5; i++) {
-//        Recognition recognitionX = results.get(i);
-//        if (recognitionX != null) {
-//          if (recognitionX.getTitle() != null) recognition1TextView.setText(recognitionX.getTitle());
-//          if (recognitionX.getConfidence() != null)
-//            recognition1ValueTextView.setText(
-//                    String.format("%.2f", (100 * recognitionX.getConfidence())) + "%");
-//        }
-//      }
             Recognition recognition1 = results.get(1);
             if (recognition1 != null) {
                 if (recognition1.getTitle() != null)
                     recognition1TextView.setText(recognition1.getTitle());
                 if (recognition1.getConfidence() != null)
                     recognition1ValueTextView.setText(
-                            String.format("%.2f", (100 * recognition1.getConfidence())) + "%");
+                       String.format("%.2f", (100 * recognition1.getConfidence())) + "%");
             }
 
             Recognition recognition2 = results.get(2);
