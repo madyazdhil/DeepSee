@@ -1,20 +1,20 @@
-artstudio
-bathroom
-classroom
-computerroom
-elevator
-greenhouse
-hospitalroom
-inside_bus
-kindergarden
-laboratorywet
-library
-museum
-office
-operating_room
-poolinside
-restaurant_kitchen
-stairscase
-studiomusic
-tv_studio
-waitingroom
+Art Studio
+Bathroom
+Classroom
+Computer Room
+Elevator
+Greenhouse
+Hospital Room
+Inside Bus
+Kindergarden
+Laboratory Wet
+Library
+Museum
+Office
+Operating Room
+Pool Inside
+Restaurant Kitchen
+Stairscase
+Studio Music
+TV Studio
+Waiting Room

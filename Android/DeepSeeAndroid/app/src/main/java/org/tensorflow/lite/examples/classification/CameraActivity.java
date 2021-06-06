@@ -22,6 +22,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -37,6 +38,13 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
 import android.speech.tts.TextToSpeech;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -50,26 +58,28 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.UiThread;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+import org.tensorflow.lite.examples.classification.data.DataSet;
 import org.tensorflow.lite.examples.classification.env.ImageUtils;
 import org.tensorflow.lite.examples.classification.env.Logger;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Device;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Model;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Recognition;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
+import static org.tensorflow.lite.examples.classification.PopUpSaveToCloud.PRECISE;
 
 public abstract class CameraActivity extends AppCompatActivity
         implements OnImageAvailableListener,
@@ -83,7 +93,7 @@ public abstract class CameraActivity extends AppCompatActivity
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     protected int previewWidth = 0;
     protected int previewHeight = 0;
-  private boolean debug = false;
+    private boolean debug = false;
     private Handler handler;
     private HandlerThread handlerThread;
     private boolean useCamera2API;
@@ -139,7 +149,7 @@ public abstract class CameraActivity extends AppCompatActivity
             requestPermission();
         }
 
-        btnSaveToCloud = findViewById(R.id.btn_save_to_cloud);
+        btnSaveToCloud = findViewById(R.id.btn_rate_result);
         threadsTextView = findViewById(R.id.threads);
         plusImageView = findViewById(R.id.plus);
         minusImageView = findViewById(R.id.minus);
@@ -290,7 +300,7 @@ public abstract class CameraActivity extends AppCompatActivity
                 };
         processImage();
     }
-    
+
     /**
      * Callback for Camera2 API
      */
@@ -559,7 +569,7 @@ public abstract class CameraActivity extends AppCompatActivity
     }
 
     public boolean isDebug() {
-    return debug;
+        return debug;
     }
 
     protected void readyForNextImage() {
@@ -586,6 +596,7 @@ public abstract class CameraActivity extends AppCompatActivity
 //  Collections.fill(scenes, Boolean.TRUE);
     boolean scenes[] = new boolean[n_class];
     private String detectTitle = "";
+    private String percentResult = "";
 
     @UiThread
     protected void showResultsInBottomSheet(List<Recognition> results) {
@@ -600,8 +611,9 @@ public abstract class CameraActivity extends AppCompatActivity
                 if (recognition.getConfidence() != null)
                     recognitionValueTextView.setText(
                             String.format("%.2f", (100 * recognition.getConfidence())) + "%");
+                percentResult = String.format("%.2f", (100 * recognition.getConfidence())) + "%";
                 float confi = 100 * recognition.getConfidence();
-                String[] labels = {"artstudio", "bathroom", "classroom", "computerroom", "elevator", "greenhouse", "hospitalroom", "inside_bus", "kindergarden", "laboratorywet", "library", "museum", "office", "operating_room", "poolinside", "restaurant_kitchen", "stairscase", "studiomusic", "tv_studio", "waitingroom"};
+                String[] labels = {"Art Studio", "Bathroom", "Classroom", "Computer Room", "Elevator", "Greenhouse", "Hospital Room", "Inside Bus", "Kindergarden", "Laboratory Wet", "Library", "Museum", "Office", "Operating Room", "Pool Inside", "Restaurant Kitchen", "Stairscase", "Studio Music", "TV Studio", "Waiting Room"};
                 try {
                     for (int i = 0; i < n_class; i++) {
                         if (!scenes[i] && recognitionTextView.getText().toString().equalsIgnoreCase(labels[i]) && confi > 90) {
@@ -625,7 +637,7 @@ public abstract class CameraActivity extends AppCompatActivity
                     recognition1TextView.setText(recognition1.getTitle());
                 if (recognition1.getConfidence() != null)
                     recognition1ValueTextView.setText(
-                       String.format("%.2f", (100 * recognition1.getConfidence())) + "%");
+                            String.format("%.2f", (100 * recognition1.getConfidence())) + "%");
             }
 
             Recognition recognition2 = results.get(2);
@@ -660,6 +672,7 @@ public abstract class CameraActivity extends AppCompatActivity
     }
 
     private Bitmap image;
+
     protected void setBitmapImage(Bitmap image) {
         this.image = image;
     }
@@ -730,28 +743,67 @@ public abstract class CameraActivity extends AppCompatActivity
             }
             setNumThreads(--numThreads);
             threadsTextView.setText(String.valueOf(numThreads));
-        } else if (v.getId() == R.id.btn_save_to_cloud) {
+        } else if (v.getId() == R.id.btn_rate_result) {
             if (image != null) {
-                ProgressDialog progressDialog = new ProgressDialog(this);
-                progressDialog.setMessage("Please Wait!");
-                progressDialog.show();
+                DataSet dataSet = new DataSet();
+                dataSet.setMlResult(detectTitle);
+                dataSet.setUserThinkResult(detectTitle);
+                dataSet.setAccuracy(PRECISE);
+                dataSet.setPercentResult(percentResult);
 
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                image.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                byte[] byteArray = stream.toByteArray();
-                StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("data_set/"+detectTitle+"/" + UUID.randomUUID().toString());
-                storageReference.putBytes(byteArray).addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(getApplicationContext(), "SUCCESS", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "PLEASE, TRY AGAIN!", Toast.LENGTH_SHORT).show();
-                    }
-                    progressDialog.dismiss();
+                PopUpSaveToCloud popUpSaveToCloud = new PopUpSaveToCloud(rotateBitmap(image, 90), dataSet);
+                popUpSaveToCloud.show(getSupportFragmentManager(), "Save To Cloud");
+                popUpSaveToCloud.setOnSaveCallback((image, dataSet1) -> {
+                    ProgressDialog progressDialog = new ProgressDialog(this);
+                    progressDialog.setMessage("Please Wait!");
+                    progressDialog.show();
+
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    byte[] byteArray = stream.toByteArray();
+
+                    dataSet1.setUserThinkResult(dataSet1.getUserThinkResult().replace(" ", "_").toLowerCase());
+
+                    StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("data_set/" + dataSet1.getUserThinkResult() + "/" + UUID.randomUUID().toString());
+                    storageReference.putBytes(byteArray).continueWithTask(task -> {
+                        if (!task.isSuccessful()) {
+                            throw Objects.requireNonNull(task.getException());
+                        }
+                        return storageReference.getDownloadUrl();
+                    }).addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            dataSet1.setImageUrl(Objects.requireNonNull(task.getResult()).toString());
+                            Log.d("datSet", dataSet1.toString());
+
+                            DatabaseReference db = FirebaseDatabase.getInstance().getReference();
+
+                            db.child("dataset").child(UUID.randomUUID().toString()).setValue(dataSet1)
+                                    .addOnSuccessListener(aVoid -> {
+                                        progressDialog.dismiss();
+                                        Toast.makeText(getApplicationContext(), "SUCCESS", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.d("ERROR", e.getMessage());
+                                        progressDialog.dismiss();
+                                        Toast.makeText(getApplicationContext(), "SUCCESS", Toast.LENGTH_SHORT).show();
+                                    });
+                        } else {
+                            progressDialog.dismiss();
+                            Toast.makeText(getApplicationContext(), "PLEASE, TRY AGAIN!", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 });
+
             } else {
                 Toast.makeText(getApplicationContext(), "PLEASE, TRY AGAIN!", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    public static Bitmap rotateBitmap(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     @Override

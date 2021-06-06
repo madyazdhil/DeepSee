@@ -18,6 +18,8 @@
 
     <string name="device">Device:</string>
     <string name="save_to_cloud">Save to Cloud</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
     <string-array name="devices">
         <item>CPU</item>
         <item>GPU</item>

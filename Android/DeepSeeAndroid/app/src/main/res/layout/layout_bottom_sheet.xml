@@ -101,6 +101,8 @@
             android:layout_width="match_parent"
             android:layout_height="1px"
             android:layout_marginTop="8dp"
+
+            android:visibility="gone"
             android:background="@android:color/darker_gray" />
     </LinearLayout>
 
@@ -228,6 +230,8 @@
         android:layout_width="match_parent"
         android:layout_height="1px"
         android:layout_marginTop="10dp"
+
+        android:visibility="gone"
         android:background="@android:color/darker_gray" />
 
     <RelativeLayout
@@ -281,7 +285,8 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1px"
-        android:layout_marginTop="10dp"
+
+        android:layout_marginTop="8dp"
         android:background="@android:color/darker_gray" />
 
     <RelativeLayout
@@ -331,11 +336,12 @@
     </RelativeLayout>
 
     <Button
-        android:id="@+id/btn_save_to_cloud"
+        android:id="@+id/btn_rate_result"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:backgroundTint="@color/colorPrimary"
-        android:text="@string/save_to_cloud"
+        android:text="Rate the Result"
         android:textAllCaps="false"
         android:textColor="@android:color/white" />
 </LinearLayout>

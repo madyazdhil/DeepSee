@@ -29,7 +29,9 @@ import android.os.SystemClock;
 import android.util.Size;
 import android.util.TypedValue;
 import android.widget.Toast;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.tensorflow.lite.examples.classification.env.BorderedText;
 import org.tensorflow.lite.examples.classification.env.Logger;
 import org.tensorflow.lite.examples.classification.tflite.Classifier;
@@ -41,12 +43,6 @@ import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.tflite.Detector;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
 import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-//import org.tensorflow.lite.examples.detection.env.BorderedText;
 
 public class ClassifierActivity extends CameraActivity implements OnImageAvailableListener {
   private static final Logger LOGGER = new Logger();
@@ -265,7 +261,6 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
           for (final Detector.Recognition result : results) {
             final RectF location = result.getLocation();
-
             if (location != null && result.getConfidence() >= minimumConfidence) {
               canvas.drawRect(location, paint);
               System.out.println("test " + result);
