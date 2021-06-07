@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -57,6 +58,8 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.tensorflow.lite.examples.detection.tflite.Detector;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.storage.FirebaseStorage;
@@ -381,25 +384,6 @@ public abstract class CameraActivity extends AppCompatActivity
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
-
- /*   mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-      @Override
-      public void onCompletion(MediaPlayer mp) {
-        mp.release();
-      }
-    });
-    mp1.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-      @Override
-      public void onCompletion(MediaPlayer mp) {
-        mp.release();
-      }
-    });
-    mp2.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-      @Override
-      public void onCompletion(MediaPlayer mp) {
-        mp.release();
-      }
-    });*/
     }
 
     @Override
@@ -599,9 +583,10 @@ public abstract class CameraActivity extends AppCompatActivity
     private String percentResult = "";
 
     @UiThread
-    protected void showResultsInBottomSheet(List<Recognition> results) {
+    protected void showResultsInBottomSheet(List<Recognition> results, List<Detector.Recognition> results_detector) {
+        String text = "Indoor Scenes. ";
+        boolean gas = false;
         if (results != null && results.size() >= 5) {
-            System.out.println("Ukuran : " + results.size());
             Recognition recognition = results.get(0);
             if (recognition != null) {
                 if (recognition.getTitle() != null) {
@@ -614,16 +599,21 @@ public abstract class CameraActivity extends AppCompatActivity
                 percentResult = String.format("%.2f", (100 * recognition.getConfidence())) + "%";
                 float confi = 100 * recognition.getConfidence();
                 String[] labels = {"Art Studio", "Bathroom", "Classroom", "Computer Room", "Elevator", "Greenhouse", "Hospital Room", "Inside Bus", "Kindergarden", "Laboratory Wet", "Library", "Museum", "Office", "Operating Room", "Pool Inside", "Restaurant Kitchen", "Stairscase", "Studio Music", "TV Studio", "Waiting Room"};
+
                 try {
                     for (int i = 0; i < n_class; i++) {
                         if (!scenes[i] && recognitionTextView.getText().toString().equalsIgnoreCase(labels[i]) && confi > 90) {
-                            t1.speak(labels[i], TextToSpeech.QUEUE_FLUSH, null);
+//                            t1.speak(labels[i], TextToSpeech.QUEUE_ADD, null);
+//                            t1.speak("OK. \n . " + labels[i], TextToSpeech.QUEUE_FLUSH, null);
+                            text = text + labels[i] + ". ";
                             scenes[i] = true;
                             for (int j = 0; j < n_class; j++) {
                                 if (j != i) {
                                     scenes[j] = false;
                                 }
                             }
+                            gas = true;
+                            break;
                         }
                     }
                 } catch (Exception e) {
@@ -648,6 +638,48 @@ public abstract class CameraActivity extends AppCompatActivity
                     recognition2ValueTextView.setText(
                             String.format("%.2f", (100 * recognition2.getConfidence())) + "%");
             }
+        }
+
+        System.out.println("YAHOOOO " + results_detector);
+        int object_number = 0;
+        for (final Detector.Recognition rd : results_detector) {
+            if (rd.getConfidence() >= 0.5f) {
+                object_number++;
+            }
+        }
+        System.out.println("Jumlah: " + object_number);
+        if(object_number==0) {
+            text = text + "No objects detected. ";
+        }
+        else if(object_number==1) {
+            text = text + "There is " + String.valueOf(object_number) + "object detected. ";
+        }
+        else {
+            text = text + "There are " + String.valueOf(object_number) + "objects detected. ";
+        }
+
+        for (final Detector.Recognition rd : results_detector) {
+            if (rd.getConfidence() >= 0.5f) {
+                RectF location = rd.getLocation();
+                float lr = (location.right-location.left)/2;
+                if(lr>=0 && lr<100) {
+                    text = text + rd.getTitle() + "is on the left side. ";
+                }
+                else if(lr>=100 && lr<200) {
+                    text = text + rd.getTitle() + "is on the front side. ";
+                }
+                else {
+                    text = text + rd.getTitle() + "is on the right side. ";
+                }
+
+//                text = text + rd.getTitle() + ". ";
+            }
+        }
+
+
+
+        if(gas) {
+            t1.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         }
     }
 

@@ -6,7 +6,7 @@ Elevator
 Greenhouse
 Hospital Room
 Inside Bus
-Kindergarden
+Kindergarten
 Laboratory Wet
 Library
 Museum
@@ -14,7 +14,7 @@ Office
 Operating Room
 Pool Inside
 Restaurant Kitchen
-Stairscase
+Staircase
 Studio Music
 TV Studio
 Waiting Room

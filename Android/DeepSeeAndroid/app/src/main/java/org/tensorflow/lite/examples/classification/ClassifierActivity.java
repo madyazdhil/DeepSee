@@ -178,39 +178,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
   @Override
   protected void processImage() {
-    rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
-    final int cropSize = Math.min(previewWidth, previewHeight);
-
-    runInBackground(
-        new Runnable() {
-          @Override
-          public void run() {
-            if (classifier != null) {
-              final long startTime = SystemClock.uptimeMillis();
-              final List<Classifier.Recognition> results =
-                  classifier.recognizeImage(rgbFrameBitmap, sensorOrientation);
-              lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-              LOGGER.v("Detect: %s", results);
-
-              runOnUiThread(
-                  new Runnable() {
-                    @Override
-                    public void run() {
-                      showResultsInBottomSheet(results);
-                      showFrameInfo(previewWidth + "x" + previewHeight);
-                      showCropInfo(imageSizeX + "x" + imageSizeY);
-                      showCameraResolution(cropSize + "x" + cropSize);
-                      showRotationInfo(String.valueOf(sensorOrientation));
-                      showInference(lastProcessingTimeMs + "ms");
-                      setBitmapImage(rgbFrameBitmap);
-                    }
-                  });
-            }
-            readyForNextImage();
-          }
-        });
-
-    // Detector
+    // Object Detection
     ++timestamp;
     final long currTimestamp = timestamp;
     trackingOverlay.postInvalidate();
@@ -222,16 +190,15 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
     }
     computingDetection = true;
     LOGGER.i("Preparing image " + currTimestamp + " for detection in bg thread.");
-
 //     readyForNextImage();
-
     final Canvas canvas = new Canvas(croppedBitmap);
     canvas.drawBitmap(rgbFrameBitmap, frameToCropTransform, null);
+
     // For examining the actual TF input.
     if (SAVE_PREVIEW_BITMAP) {
       ImageUtils.saveBitmap(croppedBitmap);
     }
-
+    final List<Detector.Recognition>[] results_detector = new List[]{new ArrayList<Detector.Recognition>()};
 //     Detector
     runInBackground(
       new Runnable() {
@@ -239,7 +206,10 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
         public void run() {
           LOGGER.i("Running detection on image " + currTimestamp);
           final long startTime = SystemClock.uptimeMillis();
-          final List<Detector.Recognition> results = detector.recognizeImage(croppedBitmap);
+          results_detector[0] = detector.recognizeImage(croppedBitmap);
+//          System.out.println("OKE : " + results_detector[0]);
+//          final List<Detector.Recognition> results = detector.recognizeImage(croppedBitmap);
+//          System.out.println(results);
           lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
           cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
@@ -259,7 +229,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
           final List<Detector.Recognition> mappedRecognitions =
               new ArrayList<Detector.Recognition>();
 
-          for (final Detector.Recognition result : results) {
+          for (final Detector.Recognition result : results_detector[0]) {
             final RectF location = result.getLocation();
             if (location != null && result.getConfidence() >= minimumConfidence) {
               canvas.drawRect(location, paint);
@@ -288,6 +258,39 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
             });
         }
       });
+
+    // Indoor Scenes Recognition
+    rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
+    final int cropSize = Math.min(previewWidth, previewHeight);
+
+    runInBackground(
+    new Runnable() {
+      @Override
+      public void run() {
+        if (classifier != null) {
+          final long startTime = SystemClock.uptimeMillis();
+          final List<Classifier.Recognition> results =
+                  classifier.recognizeImage(rgbFrameBitmap, sensorOrientation);
+          lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+          LOGGER.v("Detect: %s", results);
+
+          runOnUiThread(
+            new Runnable() {
+              @Override
+              public void run() {
+                showResultsInBottomSheet(results, results_detector[0]);
+                showFrameInfo(previewWidth + "x" + previewHeight);
+                showCropInfo(imageSizeX + "x" + imageSizeY);
+                showCameraResolution(cropSize + "x" + cropSize);
+                showRotationInfo(String.valueOf(sensorOrientation));
+                showInference(lastProcessingTimeMs + "ms");
+                setBitmapImage(rgbFrameBitmap);
+              }
+            });
+        }
+        readyForNextImage();
+      }
+    });
   }
 
   @Override

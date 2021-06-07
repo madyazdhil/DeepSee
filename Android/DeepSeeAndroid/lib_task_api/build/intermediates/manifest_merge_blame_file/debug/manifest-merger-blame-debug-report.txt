@@ -4,8 +4,8 @@
 4
 5    <uses-sdk
 6        android:minSdkVersion="21"
-6-->E:\Learn Forever\Belajar AndroidStudio\Bangkit\DeepSee\Android\DeepSeeAndroid\lib_task_api\src\main\AndroidManifest.xml
+6-->D:\Doc\Teknik Informatika S1\Semester 8\Bangkit\Capstone Project\Pull3\Android\DeepSeeAndroid\lib_task_api\src\main\AndroidManifest.xml
 7        android:targetSdkVersion="28" />
-7-->E:\Learn Forever\Belajar AndroidStudio\Bangkit\DeepSee\Android\DeepSeeAndroid\lib_task_api\src\main\AndroidManifest.xml
+7-->D:\Doc\Teknik Informatika S1\Semester 8\Bangkit\Capstone Project\Pull3\Android\DeepSeeAndroid\lib_task_api\src\main\AndroidManifest.xml
 8
 9</manifest>
