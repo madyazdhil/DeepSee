@@ -603,8 +603,6 @@ public abstract class CameraActivity extends AppCompatActivity
                 try {
                     for (int i = 0; i < n_class; i++) {
                         if (!scenes[i] && recognitionTextView.getText().toString().equalsIgnoreCase(labels[i]) && confi > 90) {
-//                            t1.speak(labels[i], TextToSpeech.QUEUE_ADD, null);
-//                            t1.speak("OK. \n . " + labels[i], TextToSpeech.QUEUE_FLUSH, null);
                             text = text + labels[i] + ". ";
                             scenes[i] = true;
                             for (int j = 0; j < n_class; j++) {
@@ -639,8 +637,6 @@ public abstract class CameraActivity extends AppCompatActivity
                             String.format("%.2f", (100 * recognition2.getConfidence())) + "%");
             }
         }
-
-        System.out.println("YAHOOOO " + results_detector);
         int object_number = 0;
         for (final Detector.Recognition rd : results_detector) {
             if (rd.getConfidence() >= 0.5f) {
@@ -661,7 +657,7 @@ public abstract class CameraActivity extends AppCompatActivity
         for (final Detector.Recognition rd : results_detector) {
             if (rd.getConfidence() >= 0.5f) {
                 RectF location = rd.getLocation();
-                float lr = (location.right-location.left)/2;
+                float lr = (location.right+location.left)/2;
                 if(lr>=0 && lr<100) {
                     text = text + rd.getTitle() + "is on the left side. ";
                 }
@@ -671,13 +667,8 @@ public abstract class CameraActivity extends AppCompatActivity
                 else {
                     text = text + rd.getTitle() + "is on the right side. ";
                 }
-
-//                text = text + rd.getTitle() + ". ";
             }
         }
-
-
-
         if(gas) {
             t1.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         }
