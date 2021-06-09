@@ -45,9 +45,11 @@ For object detection we only use some object classes too for the same reason, as
 **Android** 
 <br/>Making initial app and creating structural code to integrate with ML model and cloud infrastructure
 <p float="left">
-<img src="images/ss1.jpg" alt="ss1" width="200" height="400"/>
-<img src="images/ss2.jpg" alt="ss2" width="200" height="400"/>
-<img src="images/ss3.jpg" alt="ss3" width="200" height="400"/>
+<img src="images/ss1.jpg" alt="ss1" width="150" height="350"/>
+<img src="images/ss2rev.jpg" alt="ss2" width="150" height="350"/>
+<img src="images/ss3rev.jpg" alt="ss4" width="150" height="350"/>
+<img src="images/ss5rev.jpg" alt="ss6" width="150" height="350"/>
+<img src="images/ss6rev.jpg" alt="ss7" width="150" height="350"/>
 </p>
 
 **Cloud**
